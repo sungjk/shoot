@@ -1,8 +1,9 @@
 package io.sungjk.client
 
 import com.softwaremill.sttp.{DeserializationError, Response, StatusCodes, SttpBackend}
+import io.circe.{Json, ParsingFailure}
 import io.circe.parser._
-import io.sungjk.errors.{Error, ForbiddenError, JsonDeserializationError, ResponseError, UnknownError}
+import io.sungjk.errors.{Error, ExceededLimitError, ForbiddenError, JsonDeserializationError, NotFoundError, ResponseError, UnknownError}
 
 /**
  * Created by jeremy on 2020/01/22.
@@ -11,20 +12,24 @@ trait Backend[R[_]] {
     protected lazy val rm = backend.responseMonad
 
     protected def backend: SttpBackend[R, Nothing]
+    protected def endpoint: String = "https://api.github.com"
 }
 
 trait Client[R[_]] extends Backend[R] {
-    private def parseError(status: Int, errorMsg: String): Error = {
-        val responseErrorOpt = parse(errorMsg).right.toOption
+    private def parseError(status: Int, errorMessage: String): Error = {
+        val responseErrorOpt = parse(errorMessage).right.toOption
             .flatMap { _.as[ResponseError].right.toOption }
-        val errorMessage = responseErrorOpt.flatMap { _.errorMsgs.headOption }
-            .orElse(responseErrorOpt.flatMap { _.errors.headOption.map { _._2 } })
+        val errorMessageOpt = responseErrorOpt.map { _.message }
 
         status match {
+            case StatusCodes.Forbidden if errorMessageOpt.forall(_.contains("API rate limit exceeded")) =>
+                ExceededLimitError
             case StatusCodes.Forbidden =>
-                errorMessage.fold(ForbiddenError("Forbidden"))(ForbiddenError)
+                errorMessageOpt.fold(ForbiddenError("Forbidden"))(ForbiddenError)
+            case StatusCodes.NotFound =>
+                errorMessageOpt.fold(NotFoundError("Not Found"))(NotFoundError)
             case _ =>
-                errorMessage.fold(UnknownError("Unknown Error!"))(UnknownError)
+                errorMessageOpt.fold(UnknownError("Unknown Error!"))(UnknownError)
         }
     }
 
