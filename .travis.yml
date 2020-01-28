@@ -1,4 +1,13 @@
 sudo: false
+jdk:
+  - openjdk8
 language: scala
 scala:
   - 2.13.0
+script:
+  - sbt test
+notifications:
+  email:
+    recipients:
+      - ajax0615@gmail.com
+    on_failure: always
