@@ -5,13 +5,7 @@ import io.circe.{Decoder, Encoder, HCursor, Json}
 /**
  * Created by jeremy on 2020/01/22.
  */
-//case class ResponseError(message: String, errors: Map[String, String] = Map())
-//
-//object ResponseError {
-//    implicit val responseDecoder: Decoder[ResponseError] = deriveDecoder
-//    implicit val responseEncoder: Encoder[ResponseError] = deriveEncoder
-//}
-
+// https://developer.github.com/v3/#client-errors
 case class ResponseError(
     message: String,
     documentationUrl: Option[String]
