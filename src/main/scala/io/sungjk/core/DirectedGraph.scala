@@ -9,13 +9,16 @@ case class Node(id: Int)
 final class DirectedGraph(val graph: Map[Node, Set[Node]]) {
     private def contains(node: Node): Boolean = graph contains node
 
+    private def getNeighbors(nodes: List[Node]): List[Node] =
+        nodes flatMap { graph(_) } distinct
+
     def bfs(start: Node): List[Set[Node]] = {
         if (!contains(start)) {
             return List.empty
         }
 
         def bfs0(nodes: List[Node], visited: Set[Node]): List[Set[Node]] = {
-            val neighbors = nodes.flatMap{ graph(_) }.distinct.filterNot{ visited.contains }
+            val neighbors = getNeighbors(nodes) filterNot { visited.contains }
             if (neighbors.isEmpty) List(visited) else {
                 neighbors.flatMap { neighbor =>
                     bfs0(List(neighbor), visited + neighbor)
@@ -26,7 +29,22 @@ final class DirectedGraph(val graph: Map[Node, Set[Node]]) {
         bfs0(List(start), Set(start))
     }
 
-    def findPaths(start: Node, end: Node, visited: Set[Node]): List[Node] = ???
+    def findPaths(start: Node, end: Node): List[Set[Node]] = {
+        if (!contains(start) || !contains(end)) {
+            return List.empty
+        }
+
+        def findPaths0(curr: Node, nodes: List[Node], visited: Set[Node]): List[Set[Node]] = {
+            if (curr.id == end.id) List(visited) else {
+                val neighbors = getNeighbors(nodes) filterNot { visited.contains }
+                neighbors.flatMap { neighbor =>
+                    findPaths0(neighbor, List(neighbor), visited + neighbor)
+                }
+            }
+        }
+
+        findPaths0(start, List(start), Set(start))
+    }
 }
 
 object DirectedGraph {
