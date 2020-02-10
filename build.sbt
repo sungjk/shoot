@@ -14,9 +14,19 @@ val scalaTestVersion = "3.1.0"
 
 lazy val root = project.in(file("."))
   .settings(
-    name := "shoot",
-    version := "0.0.1",
-    libraryDependencies ++= Seq(
+      name := "shoot",
+      version := "0.0.1",
+      scalacOptions ++= Seq(
+          "-encoding", "utf8", // Option and arguments on same line
+          "-Xfatal-warnings",  // New lines for each options
+          "-deprecation",
+          "-unchecked",
+          "-language:implicitConversions",
+          "-language:higherKinds",
+          "-language:existentials",
+          "-language:postfixOps"
+      ),
+      libraryDependencies ++= Seq(
         "io.circe" %% "circe-core" % circeVersion,
         "io.circe" %% "circe-generic" % circeVersion,
         "io.circe" %% "circe-parser" % circeVersion,
@@ -27,5 +37,5 @@ lazy val root = project.in(file("."))
         // test
         "org.scalacheck" %% "scalacheck" % scalaCheckVersion % Test,
         "org.scalatest" %% "scalatest" % scalaTestVersion % Test
-    )
+      )
   )
