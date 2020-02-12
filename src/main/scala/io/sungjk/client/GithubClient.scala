@@ -53,7 +53,7 @@ class GithubClient[R[_]](implicit sttpBackend: SttpBackend[R, Nothing]) extends 
             .send()
             .parseResponse
 
-    def getUserFollowers(username: String, reqPageOpt: Option[Int] = None, reqLimitOpt: Option[Int] = None): R[Either[Error, List[UserProfile]]] = {
+    def getFollowers(username: String, reqPageOpt: Option[Int] = None, reqLimitOpt: Option[Int] = None): R[Either[Error, List[UserProfile]]] = {
         val page = reqPageOpt.getOrElse(1)
         val limit = Math.min(maxLimit, reqLimitOpt.getOrElse(maxLimit))
         sttp.get(uri"$endpoint/users/$username/followers?per_page=$limit&page=$page")
@@ -62,7 +62,7 @@ class GithubClient[R[_]](implicit sttpBackend: SttpBackend[R, Nothing]) extends 
             .parseResponse
     }
 
-    def getUserFollowings(username: String, reqPageOpt: Option[Int] = None, reqLimitOpt: Option[Int] = None): R[Either[Error, List[UserProfile]]] = {
+    def getFollowings(username: String, reqPageOpt: Option[Int] = None, reqLimitOpt: Option[Int] = None): R[Either[Error, List[UserProfile]]] = {
         val page = reqPageOpt.getOrElse(1)
         val limit = Math.min(maxLimit, reqLimitOpt.getOrElse(maxLimit))
         sttp.get(uri"$endpoint/users/$username/following?per_page=$limit&page=$page")
@@ -71,4 +71,3 @@ class GithubClient[R[_]](implicit sttpBackend: SttpBackend[R, Nothing]) extends 
             .parseResponse
     }
 }
-

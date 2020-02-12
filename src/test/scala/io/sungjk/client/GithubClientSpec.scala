@@ -20,14 +20,14 @@ class GithubClientSpec extends AnyFlatSpec {
         assert(profile.following.isDefined)
     }
 
-    "GithubClient" should "get user followers" in {
+    "GithubClient" should "get followers" in {
         val profile = client.getUserProfile("sungjk").right.get
-        assert(profile.followers.get === client.getUserFollowers("sungjk").right.get.size)
-        assert(42 === client.getUserFollowers("sungjk", reqLimitOpt = Some(42)).right.get.size)
+        assert(profile.followers.get === client.getFollowers("sungjk").right.get.size)
+        assert(42 === client.getFollowers("sungjk", reqLimitOpt = Some(42)).right.get.size)
     }
 
-    "GithubClient" should "get user followings" in {
-        assert(100 === client.getUserFollowings("sungjk").right.get.size)
-        assert(42 === client.getUserFollowings("sungjk", reqLimitOpt = Some(42)).right.get.size)
+    "GithubClient" should "get followings" in {
+        assert(100 === client.getFollowings("sungjk").right.get.size)
+        assert(42 === client.getFollowings("sungjk", reqLimitOpt = Some(42)).right.get.size)
     }
 }

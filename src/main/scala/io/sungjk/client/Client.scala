@@ -1,7 +1,6 @@
 package io.sungjk.client
 
-import com.softwaremill.sttp.{DeserializationError, Response, StatusCodes, SttpBackend}
-import io.circe.{Json, ParsingFailure}
+import com.softwaremill.sttp.{DeserializationError, HeaderNames, MonadError, Response, StatusCodes, SttpBackend}
 import io.circe.parser._
 import io.sungjk.errors.{Error, ExceededLimitError, ForbiddenError, JsonDeserializationError, NotFoundError, ResponseError, UnknownError}
 
@@ -9,13 +8,15 @@ import io.sungjk.errors.{Error, ExceededLimitError, ForbiddenError, JsonDeserial
  * Created by jeremy on 2020/01/22.
  */
 trait Backend[R[_]] {
-    protected lazy val rm = backend.responseMonad
+    protected lazy val rm: MonadError[R] = backend.responseMonad
 
     protected def backend: SttpBackend[R, Nothing]
     protected def endpoint: String = "https://api.github.com"
 }
 
 trait Client[R[_]] extends Backend[R] {
+    case class ListResponse[Res](fin: Boolean = true, result: Res)
+
     private def parseError(status: Int, errorMessage: String): Error = {
         val responseErrorOpt = parse(errorMessage).right.toOption
             .flatMap { _.as[ResponseError].right.toOption }
@@ -33,18 +34,18 @@ trait Client[R[_]] extends Backend[R] {
         }
     }
 
-    implicit class _Response[T](r: R[Response[Either[DeserializationError[io.circe.Error], T]]]) {
-        def parseResponse: R[Either[Error, T]] =
-            rm.map(r) { res =>
-                res.body match {
-                    case Right(result) =>
-                        result.fold(
-                            _ => Left(JsonDeserializationError),
-                            body => Right(body)
-                        )
-                    case Left(error) =>
-                        Left(parseError(res.code, error))
-                }
+    implicit class ResponseOps[T](r: R[Response[Either[DeserializationError[io.circe.Error], T]]]) {
+        def parseResponse: R[Either[Error, T]] = rm.map(r) { response =>
+            val (body, nextOpt) = (response.body, response.header(HeaderNames.Link))
+            (body, nextOpt) match {
+                case (Right(result), Some(_)) =>
+                    // TODO next 처리
+                    result.fold(_ => Left(JsonDeserializationError), body => Right(body))
+                case (Right(result), None) =>
+                    result.fold(_ => Left(JsonDeserializationError), body => Right(body))
+                case (Left(error), _) =>
+                    Left(parseError(response.code, error))
             }
+        }
     }
 }
