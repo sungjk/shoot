@@ -1,6 +1,6 @@
 package io.sungjk.client
 
-import com.softwaremill.sttp.{DeserializationError, HeaderNames, MonadError, Response, StatusCodes, SttpBackend}
+import com.softwaremill.sttp.{DeserializationError, HeaderNames, MonadError, Request, Response, StatusCodes, SttpBackend}
 import io.circe.parser._
 import io.sungjk.errors.{Error, ExceededLimitError, ForbiddenError, JsonDeserializationError, NotFoundError, ResponseError, UnknownError}
 
@@ -34,9 +34,17 @@ trait Client[R[_]] extends Backend[R] {
         }
     }
 
+    implicit class RequestOps[T](r: Request[T, Nothing]) {
+        def log(): Request[T, Nothing] = {
+            println(s">>> ${r.method.m} ${r.uri}")
+            r
+        }
+    }
+
     implicit class ResponseOps[T](r: R[Response[Either[DeserializationError[io.circe.Error], T]]]) {
         def parseResponse: R[Either[Error, T]] = rm.map(r) { response =>
             val (body, nextOpt) = (response.body, response.header(HeaderNames.Link))
+            println(s"<<< $body")
             (body, nextOpt) match {
                 case (Right(result), Some(_)) =>
                     // TODO next 처리

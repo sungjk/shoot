@@ -49,6 +49,7 @@ class GithubClient[R[_]](implicit sttpBackend: SttpBackend[R, Nothing]) extends 
 
     def getUserProfile(username: String): R[Either[Error, UserProfile]] =
         sttp.get(uri"$endpoint/users/$username")
+            .log()
             .response(asJson[UserProfile])
             .send()
             .parseResponse
@@ -57,6 +58,7 @@ class GithubClient[R[_]](implicit sttpBackend: SttpBackend[R, Nothing]) extends 
         val page = reqPageOpt.getOrElse(1)
         val limit = Math.min(maxLimit, reqLimitOpt.getOrElse(maxLimit))
         sttp.get(uri"$endpoint/users/$username/followers?per_page=$limit&page=$page")
+            .log()
             .response(asJson[List[UserProfile]])
             .send()
             .parseResponse
@@ -66,6 +68,7 @@ class GithubClient[R[_]](implicit sttpBackend: SttpBackend[R, Nothing]) extends 
         val page = reqPageOpt.getOrElse(1)
         val limit = Math.min(maxLimit, reqLimitOpt.getOrElse(maxLimit))
         sttp.get(uri"$endpoint/users/$username/following?per_page=$limit&page=$page")
+            .log()
             .response(asJson[List[UserProfile]])
             .send()
             .parseResponse
