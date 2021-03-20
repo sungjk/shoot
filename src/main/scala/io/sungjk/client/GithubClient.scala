@@ -3,6 +3,7 @@ package io.sungjk.client
 import com.softwaremill.sttp._
 import com.softwaremill.sttp.circe.asJson
 import io.circe.{Decoder, Encoder, HCursor, Json}
+import io.sungjk
 import io.sungjk.errors.Error
 
 import scala.language.higherKinds
@@ -44,6 +45,7 @@ object UserProfile {
 
 class GithubClient[R[_]](implicit sttpBackend: SttpBackend[R, Nothing]) extends Client[R] {
     override protected def backend: SttpBackend[R, Nothing] = sttpBackend
+    override protected def endpoint: String = "https://api.github.com"
 
     private val maxLimit = 100
 

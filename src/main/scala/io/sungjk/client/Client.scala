@@ -11,7 +11,7 @@ trait Backend[R[_]] {
     protected lazy val rm: MonadError[R] = backend.responseMonad
 
     protected def backend: SttpBackend[R, Nothing]
-    protected def endpoint: String = "https://api.github.com"
+    protected def endpoint: String
 }
 
 trait Client[R[_]] extends Backend[R] {
@@ -23,6 +23,7 @@ trait Client[R[_]] extends Backend[R] {
         val errorMessageOpt = responseErrorOpt.map { _.message }
 
         status match {
+            // TODO fix
             case StatusCodes.Forbidden if errorMessageOpt.forall(_.contains("API rate limit exceeded")) =>
                 ExceededLimitError
             case StatusCodes.Forbidden =>
@@ -44,7 +45,6 @@ trait Client[R[_]] extends Backend[R] {
     implicit class ResponseOps[T](r: R[Response[Either[DeserializationError[io.circe.Error], T]]]) {
         def parseResponse: R[Either[Error, T]] = rm.map(r) { response =>
             val (body, nextOpt) = (response.body, response.header(HeaderNames.Link))
-            println(s"<<< $body")
             (body, nextOpt) match {
                 case (Right(result), Some(_)) =>
                     // TODO next 처리
